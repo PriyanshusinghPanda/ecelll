@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Name and Topic Selection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .form-container {
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px 30px;
+            width: 300px;
+        }
+        .form-container h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #666666;
+        }
+        .form-group input[type="text"], .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .form-group input[type="text"]:focus, .form-group select:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+        .form-group button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .form-group button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Team Registration</h1>
+        <form id="team-form">
+            <div class="form-group">
+                <label for="team-name">Team Name</label>
+                <input type="text" id="team-name" name="team_name" placeholder="Enter your team name" required>
+            </div>
+            <div class="form-group">
+                <label for="topic">Select a Topic</label>
+                <select id="topic" name="topic" required>
+                    <option value="" disabled selected>Loading topics...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit">Submit</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        const topicSelect = document.getElementById("topic");
+        const form = document.getElementById("team-form");
+
+        // Fetch topics from the backend
+        function loadTopics() {
+            fetch("/get_topics")
+                .then(response => response.json())
+                .then(topics => {
+                    topicSelect.innerHTML = '<option value="" disabled selected>Select a topic</option>';
+                    topics.forEach(topic => {
+                        const option = document.createElement("option");
+                        option.value = topic;
+                        option.textContent = topic;
+                        topicSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error("Error fetching topics:", error));
+        }
+
+        // Submit the form and remove the selected topic
+        form.addEventListener("submit", event => {
+            event.preventDefault();
+            const selectedTopic = topicSelect.value;
+            const teamName = document.getElementById("team-name").value;
+
+            if (!selectedTopic || !teamName) {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            // Send the selected topic to the server
+            fetch("/submit", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ topic: selectedTopic })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === "Topic submitted successfully.") {
+                        alert("Form submitted successfully!");
+                        loadTopics(); // Reload the remaining topics
+                        form.reset(); // Reset the form
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => console.error("Error submitting form:", error));
+        });
+
+        // Load topics when the page loads
+        loadTopics();
+    </script>
+</body>
+</html>
